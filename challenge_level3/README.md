@@ -8,5 +8,5 @@
 1. Or instruction is failing incorrect answer
 2. Or immediate instruction is failing incorrect answer
 
-## Failing screenshots
-![Failing or instruction](image.png)
+## Differential trace evidence
+![Spike and RTL trace comparison highlighting an OR-instruction mismatch](image.png)
