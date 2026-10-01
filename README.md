@@ -1,195 +1,134 @@
-# RISC-V CTB Challenges
-![Screenshot_20260225_092108_Drive](https://github.com/user-attachments/assets/d98d0da0-aaeb-476e-bb4e-383532d806a5)
+# RISC-V Processor Verification Challenges
 
-This repository contains a series of RISC-V challenge exercises focused on bug hunting, directed testing, exception handling, and ISA coverage validation. Each challenge folder includes its own README with task details and fixes.
+Hands-on RISC-V verification exercises focused on instruction generation, directed assembly tests, exception handling, and differential simulation. The repository documents debugging work across RV32I-oriented challenges and includes a bundled reference-versus-DUT simulation flow.
 
-## Repository layout
+> **Scope:** This is a verification and test-development project. It does not contain editable processor RTL; Level 3 runs a supplied `riscv_buggy` simulator executable.
 
-- challenge_level1/
-  - challenge1_logical/
-  - challenge2_loop/
-  - challenge3_illegal/
-- challenge_level2/
-  - challenge1_instructions/
-  - challenge2_exceptions/
-- challenge_level3/
-  - directed_test/
-  - random_test/
-  - riscv_dv_coverage/
-- tutorial/
+## Verification work
 
-## Challenge Level 1
+| Area | Verification problem | Work documented |
+| --- | --- | --- |
+| Level 1: generator and assembly tests | Random-test configuration included instructions outside the intended RV32I scope; generated assembly also contained invalid operands; one test did not terminate. | Disabled the unwanted RV64M distribution, corrected invalid register/immediate operands, and added a bounded loop exit. |
+| Level 2: instruction and exception tests | Random instruction generation needed an RV32I configuration; illegal-instruction handling could return to the faulting instruction and retrap. | Added generator configuration and illegal-instruction stimulus, then changed the exception path to terminate instead of re-executing the illegal instruction. |
+| Level 3: differential simulation | Compare the supplied processor model's trace with a Spike reference run. | Includes directed and AAPG-generated random tests, trace comparison, and saved RISCV-DV coverage artifacts. |
 
-### challenge1_logical
+The fixes and challenge-specific context are documented in the READMEs under each level. The `tutorial/` directory contains smaller directed, AAPG, and RISCV-DV examples.
 
-#### Bug explanation with screenshot
+## Recognition
 
-> rel_rv64m is not 0 in the rv32i.yml file and hence it is causing error because 64-bit instructions are not allowed in 32-bit tests.
+**RISC-V Capture The Bug Hackathon — Certificate of Completion**
 
-![bug screenshot](challenge_level1/challenge1_logical/image-2.png)
+[![Participation certificate for Shashank V M](assets/riscv-ctb-participation-certificate-preview.png)](assets/riscv-ctb-participation-certificate.pdf)
 
-#### Screenshot of the fix
+*The certificate preview is shown above. [Open or download the full PDF](assets/riscv-ctb-participation-certificate.pdf).*
 
-![fix screenshot](challenge_level1/challenge1_logical/image-1.png)
+## Debugging evidence
 
-#### Explanation of the fix
+The repository includes before-and-after screenshots for the documented fixes, plus trace-comparison evidence. Expand a section to view the screenshots.
 
-> Sets rel_rv64m to 0 in the rv32i.yml file because it is 32-bit testing and hence distributions of all 64-bit instructions to be set to zero.
+<details>
+<summary>Constraining random generation to RV32I</summary>
+<p>
+<img src="challenge_level2/challenge1_instructions/image.png" alt="Before: RV64M instruction generation is enabled in the RV32I configuration" width="48%">
+<img src="challenge_level2/challenge1_instructions/image-1.png" alt="After: RV64M instruction generation is disabled" width="48%">
+</p>
+</details>
 
-### challenge2_loop
+<details>
+<summary>Bounding the directed loop test</summary>
+<p>
+<img src="challenge_level1/challenge2_loop/image-1.png" alt="Before: the loop has no termination condition" width="48%">
+<img src="challenge_level1/challenge2_loop/image-2.png" alt="After: a counter terminates the loop after the test cases" width="48%">
+</p>
+</details>
 
-#### Bug explanation with screenshot
+<details>
+<summary>Correcting invalid generated assembly operands</summary>
+<p>
+<img src="challenge_level1/challenge1_logical/image-2.png" alt="Before: invalid register and immediate operands in generated assembly" width="48%">
+<img src="challenge_level1/challenge1_logical/image-1.png" alt="After: invalid operands are replaced with valid operands" width="48%">
+</p>
+</details>
 
-> Issue was test not exiting out of loop because it keeps looping and there is no code added to exit out of the loop.
+<details>
+<summary>Preventing repeated illegal-instruction traps</summary>
+<p>
+<img src="challenge_level1/challenge3_illegal/image.png" alt="Before: exception handler returns to the faulting illegal instruction" width="48%">
+<img src="challenge_level1/challenge3_illegal/image-1.png" alt="After: exception handler advances past the illegal instruction and terminates the test" width="48%">
+</p>
+</details>
 
-![bug screenshot](challenge_level1/challenge2_loop/image-1.png)
+<details>
+<summary>Comparing reference and DUT traces</summary>
+<p>
+<img src="challenge_level3/image.png" alt="Diff view highlighting differences between Spike and processor simulation traces" width="100%">
+</p>
+</details>
 
-#### Screenshot of the fix
+## Repository map
 
-![bug fix screenshot](challenge_level1/challenge2_loop/image-2.png)
-
-#### Explanation of the fix
-
-> Added a decrementing counter initialized to 3, decrement by 1 on each iteration and break out of the loop if the counter reaches zero. Counter initialized to 3 since there are 3 testcases.
-
-### challenge3_illegal
-
-#### Bug explanation with screenshot
-
-> 1. test.S:15855: Error: illegal operands `and s7,ra,z4' — The register z4 is invalid source register.
-> 2. test.S:25584: Error: illegal operands `andi s5,t1,s0' — The operand s0 is illegal in this context; it needs to be an immediate operand.
-
-![bug screenshot](challenge_level1/challenge3_illegal/image.png)
-
-#### Screenshot of the fix
-
-![bug fix screenshot](challenge_level1/challenge3_illegal/image-2.png)
-
-#### Explanation of the fix
-
-> 1. test.S:15855: Error: illegal operands `and s7,ra,z4' — The register name z4 is invalid source register name, replaced it with s4.
-> 2. test.S:25584: Error: illegal operands `andi s5,t1,s0' — The operand s0 is illegal in this context; it needs to be an immediate operand. Replaced it with 0.
-
-## Challenge Level 2
-
-### challenge1_instructions
-
-#### Bug explanation with screenshot
-
-> rel_rv64m is not 0 in the rv32i.yml file and hence it is causing error because 64-bit instructions are not allowed in 32-bit tests.
-
-![bug screenshot](challenge_level2/challenge1_instructions/image.png)
-
-#### Screenshot of the fix
-
-![fix screenshot](challenge_level2/challenge1_instructions/image-1.png)
-
-#### Explanation of the fix
-
-> Sets rel_rv64m to 0 in the rv32i.yml file because it is 32-bit testing and hence distributions of all 64-bit instructions to be set to zero.
-
-### challenge2_exceptions
-
-#### Bug explanation
-
-> Exception handler jumps back to illegal instruction which again raises exception creating a never ending loop.
-
-#### Explanation of the fix
-
-> In the exception handler, jump to a routine that ends the program.
-
-#### Creation of the YAML File
-
-> Copied over from instructions challenge, increased the number of instructions to 10000, so that the user function gets called the specified number of times. Added user function to generate illegal instruction exception. Calling user function 9 times to generate 9 illegal instruction exceptions because 1 illegal instruction exception is generated by default.
-
-#### Exceptions generation explanation
-
-> Referred to RISC-V assembly manual, searched for illegal instruction exception and found the instruction that generates illegal instruction exception.
->
-> Source: https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md
-
-## Challenge Level 3
-
-### riscv_dv_coverage
-
-#### Bug explanation
-
-> 1. test.S:15855: Error: illegal operands `and s7,ra,z4' — The register z4 is invalid source register.
-> 2. test.S:25584: Error: illegal operands `andi s5,t1,s0' — The operand s0 is illegal in this context; it needs to be an immediate operand.
-
-#### Explanation of the fix
-
-> 1. test.S:15855: Error: illegal operands `and s7,ra,z4' — The register name z4 is invalid source register name, replaced it with s4.
-> 2. test.S:25584: Error: illegal operands `andi s5,t1,s0' — The operand s0 is illegal in this context; it needs to be an immediate operand. Replaced it with 0.
-
-### Bug hunting methodology
-
-1. Use random testing to catch bugs not thought of. Directed tests to catch corner case bugs.
-2. Verify the bugs are valid using directed test.
-3. Copy directed assembly test to coverage folder, generate spike log, convert log to CSV and generate coverage report.
-4. If coverage satisfactory, end. Else go back to step 1.
-
-### Test fails
-
-1. Or instruction is failing incorrect answer
-2. Or immediate instruction is failing incorrect answer
-
-### Failing screenshots
-
-![Failing or instruction](challenge_level3/image.png)
-
-### RISCV-DV
-
-Test generation using riscv-dv
-
-```bash
-run --target rv32i --test riscv_arithmetic_basic_test --testlist testlist.yaml --simulator pyflow
+```text
+challenge_level1/
+  challenge1_logical/       Generated assembly operand fixes
+  challenge2_loop/          Bounded loop test
+  challenge3_illegal/       Illegal-instruction exception handling
+challenge_level2/
+  challenge1_instructions/  RV32I random instruction test
+  challenge2_exceptions/    Illegal-instruction exception test
+challenge_level3/
+  directed_test/            Directed assembly and DUT-vs-Spike comparison
+  random_test/              AAPG generation and DUT-vs-Spike comparison
+  riscv_dv_coverage/        Coverage inputs, report, and bug evidence
+tutorial/
+  directed/                 Directed assembly and Spike examples
+  aapg_random/              AAPG random-test example
+  riscv_dv_random/          RISCV-DV test list
 ```
 
-Coverage related information is obtained in the below link:
-https://github.com/chipsalliance/riscv-dv/tree/master/pygen/pygen_src
+## Running the simulations
 
-### Challenge
+The Makefiles are intended to be run from their respective test directories. For example:
 
-The challenge is to fix the tool problem in generating coverage and make rv32i ISA coverage 100%.
+```bash
+cd challenge_level3/directed_test
+make
+```
 
-#### RV32I covergroup coverage
+The Level 3 random flow can be run with:
 
-The `SCORE` values in the generated report are coverage percentages. The table below includes the RV32I-related covergroups from `challenge_level3/riscv_dv_coverage/cov_out_2023-07-31/CoverageReport.txt`; groups for M, C, F, D, and RV64 extensions are excluded.
+```bash
+cd challenge_level3/random_test
+make
+```
 
-| Covergroup | Score |
-|---|---:|
-| `opcode_cg` | 25% |
-| `csrrw_cg` | 11.4583% |
-| `rv32i_misc_cg` | 80% |
-| `mepc_alignment_cg` | 50% |
-| `beq_cg` | 43.3594% |
-| `jal_cg` | 38.2812% |
-| `lui_cg` | 26.0417% |
-| `addi_cg` | 39.2857% |
-| `auipc_cg` | 26.0417% |
-| `ori_cg` | 38.2812% |
-| `add_cg` | 24.6094% |
-| `sub_cg` | 24.6094% |
-| `sra_cg` | 26.1719% |
-| `andi_cg` | 38.2812% |
-| `srli_cg` | 26.875% |
-| `and_cg` | 26.0417% |
-| `srl_cg` | 26.1719% |
-| `sll_cg` | 26.1719% |
-| `xor_cg` | 26.0417% |
-| `or_cg` | 26.3889% |
-| `sltu_cg` | 26.1719% |
-| `sltiu_cg` | 40.1786% |
-| `xori_cg` | 38.2812% |
-| `slti_cg` | 40.1786% |
-| `srai_cg` | 26.25% |
-| `slt_cg` | 26.1719% |
-| `slli_cg` | 26.875% |
-| **Final score (unweighted mean of 27 listed covergroups)** | **32.34%** |
+These Level 3 flows compile assembly, produce a Spike reference trace, run the bundled `riscv_buggy` executable, and compare the resulting traces. The random flow also generates its assembly using AAPG.
 
-The source report lists each group with weight 1 and does not provide a separate RV32I-only total. The final score above is calculated as the arithmetic mean of the listed group percentages; it is not a total printed by the report. By this measure, the saved report does not show 100% RV32I coverage.
+### Tool requirements
 
----
+- GNU Make and a RISC-V GNU toolchain providing `riscv32-unknown-elf-gcc` and `riscv32-unknown-elf-objdump`
+- Spike RISC-V ISA simulator
+- `elf2hex` for the Level 3 DUT flows
+- AAPG for random-test generation; Python/pip are needed to install or run it
+- RISCV-DV and its Python dependencies for the documented RISCV-DV flow
 
-This README combines key notes from across the repository. For the full challenge-specific details, see the README in each challenge folder.
+Some Makefiles use fixed paths such as `/tools/mod_spike/bin/spike`, while others expect Spike on `PATH`. `setup.sh` and `model_setup.sh` also refer to tools under `/tools`; they are environment-specific rather than portable installers. The Dev Container references a prebuilt image tagged `2.0.0`; there is no separate tool-version manifest or dependency lockfile. Use an environment containing the required tools and paths before running the flows.
+
+To generate the documented RISCV-DV test from its test directory:
+
+```bash
+cd challenge_level3/riscv_dv_coverage
+run --target rv32i --test riscv_arithmetic_basic_test \
+  --testlist testlist.yaml --simulator pyflow
+```
+
+## Coverage status
+
+The checked-in report, `challenge_level3/riscv_dv_coverage/cov_out_2023-07-31/CoverageReport.txt`, contains 147 covergroups across multiple extensions. It does **not** demonstrate 100% RV32I coverage. The 27 RV32I-related covergroups identified in the project notes have an unweighted arithmetic mean of **32.34%**; this is a derived summary, not a single RV32I score reported by the coverage tool. Groups for other extensions are excluded from that calculation.
+
+## Skills exercised
+
+- RISC-V assembly test development and ISA-focused test configuration
+- Directed and constrained-random test generation
+- Exception-path and test-termination debugging
+- Instruction-set simulator (ISS) reference checking
+- Differential trace analysis and functional-coverage interpretation
