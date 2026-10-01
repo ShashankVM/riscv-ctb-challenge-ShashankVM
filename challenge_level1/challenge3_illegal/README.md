@@ -1,9 +1,8 @@
-## Bug explanation with screenshot: 
-Exception handler jumps back to illegal instruction which again raises exception creating a never ending loop. 
-![Bug screenshot](image.png)
+## Bug: The exception handler re-executes the illegal instruction
+Returning to the faulting instruction raises the same exception repeatedly.
+![Before the fix: the exception handler returns to the faulting illegal instruction](image.png)
 
-## Screenshot of the fix:
-![bug fix screenshot](image-1.png)
+## Fix
+![After the fix: the handler advances past the illegal instruction to the test termination routine](image-1.png)
 
-## Explanation of the fix:
-In the exception handler, jump to a routine that ends the program .
+In the exception handler, set `mepc` to the test termination routine before returning, so the illegal instruction is not executed again.
